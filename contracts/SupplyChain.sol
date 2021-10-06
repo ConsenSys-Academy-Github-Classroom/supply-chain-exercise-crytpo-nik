@@ -12,10 +12,10 @@ contract SupplyChain is Ownable{
      uint price;
      State state;
      address payable seller;
-     address payable buyer;
+     address payable  buyer;
    }
   // <items mapping>
-  mapping (uint => Item) items ;
+  mapping (uint => Item) public items ;
  
   /* 
    * Events
@@ -25,7 +25,7 @@ contract SupplyChain is Ownable{
 
    event LogSold(uint sku);
 
-   event LoLogShippedgForSale(uint sku);
+   event LogShipped(uint sku);
 
    event LogReceived(uint sku);
 
@@ -38,7 +38,7 @@ contract SupplyChain is Ownable{
     require(items[skuu].state == State.ForSale);
     _;
   }
-  modifier isSold(uint skuu){
+  modifier Sold(uint skuu){
     require(items[skuu].state == State.Sold);
     _;
   }
@@ -78,12 +78,9 @@ contract SupplyChain is Ownable{
   // modifier shipped(uint _sku) 
   // modifier received(uint _sku) 
 
-  constructor() public {
-    address owner = msg.sender;
-    
-  }
 
-  function addItem(string memory _name, uint _price) public returns (bool) {
+
+  function addItem(string memory _name, uint _price) public returns(bool){
     // 1. Create a new item and put in array
      items[skuCount] = Item({
       name: _name, 
@@ -93,10 +90,11 @@ contract SupplyChain is Ownable{
       seller: msg.sender,
       buyer: address(0)
     });
+    
     skuCount++;
     // 3. Emit the appropriate event
      emit LogForSale(skuCount);
-    return(true);
+     return true;
 
   }
     
@@ -116,9 +114,10 @@ contract SupplyChain is Ownable{
   //      sure the buyer is refunded any excess ether sent. 
   // 6. call the event associated with this function!
   function buyItem(uint sku) public payable forSale(sku)  paidEnough(items[sku].price) checkValue(sku) {
-    items[sku].seller.transfer(msg.value);
     items[sku].buyer = msg.sender;
+    
     items[sku].state = State.Sold;
+    items[sku].seller.transfer(items[sku].price);
     emit LogSold(sku);
   }
 
@@ -127,9 +126,9 @@ contract SupplyChain is Ownable{
   //    - the person calling this function is the seller. 
   // 2. Change the state of the item to shipped. 
   // 3. call the event associated with this function!
-  function shipItem(uint sku) public isSold(sku) verifyCaller(items[sku].seller) {
+  function shipItem(uint sku) public Sold(sku) verifyCaller(items[sku].seller) {
     items[sku].state = State.Shipped;
-    emit LoLogShippedgForSale(sku);
+    emit LogShipped(sku);
 
   }
 
@@ -144,15 +143,15 @@ contract SupplyChain is Ownable{
   }
 
   // Uncomment the following code block. it is needed to run tests
-  /* function fetchItem(uint _sku) public view */ 
-  /*   returns (string memory name, uint sku, uint price, uint state, address seller, address buyer) */ 
-  /* { */
-  /*   name = items[_sku].name; */
-  /*   sku = items[_sku].sku; */
-  /*   price = items[_sku].price; */
-  /*   state = uint(items[_sku].state); */
-  /*   seller = items[_sku].seller; */
-  /*   buyer = items[_sku].buyer; */
-  /*   return (name, sku, price, state, seller, buyer); */
-  /* } */
+   function fetchItem(uint _sku) public view 
+     returns (string memory name, uint sku, uint price, uint state, address seller, address buyer) {
+  
+    name = items[_sku].name; 
+    sku = items[_sku].sku; 
+    price = items[_sku].price; 
+    state = uint(items[_sku].state); 
+    seller = items[_sku].seller; 
+    buyer = items[_sku].buyer; 
+    return (name, sku, price, state, seller, buyer); 
+  } 
 }
